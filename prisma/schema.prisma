@@ -1,0 +1,73 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String?
+  role          String       @default("CLIENT") // ADMIN o CLIENT como texto
+  passwordHash  String
+  commissionBps Int          @default(0)
+  quotes        Quote[]
+  conversions   Conversion[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Quote {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  side   String
+  source String
+  target String
+
+  amount      Float
+  priceSpot   Float
+  priceClient Float
+
+  bitsoQuoteId String
+  raw          String // <— antes era Json
+  expiresAt    DateTime
+  status       String
+  createdAt    DateTime @default(now())
+
+  conversion Conversion?
+}
+
+model Conversion {
+  id      String @id @default(cuid())
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  bitsoConversionId String
+  folio             String   @unique
+  status            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ConversionLog {
+  id              String   @id @default(cuid())
+  folio           String   @unique
+  quoteId         String
+  bitsoConversion String?
+  source          String
+  target          String
+  sourceAmount    Float
+  targetAmount    Float
+  rate            Float
+  status          String
+  createdAt       DateTime @default(now())
+}
+
